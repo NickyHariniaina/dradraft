@@ -8,15 +8,21 @@ export function applyCamera(ctx: CanvasRenderingContext2D, cam: Camera) {
   ctx.setTransform(cam.zoom, 0, 0, cam.zoom, cam.x, cam.y);
 }
 
-export function drawGrid(ctx: CanvasRenderingContext2D, cam: Camera, w: number, h: number) {
+export function drawGrid(
+  ctx: CanvasRenderingContext2D,
+  cam: Camera,
+  w: number,
+  h: number,
+  dark = false
+) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = PAPER;
+  ctx.fillStyle = dark ? "#171512" : PAPER;
   ctx.fillRect(0, 0, w, h);
   const gap = 24 * cam.zoom;
   if (gap < 8) return;
   const ox = cam.x % gap;
   const oy = cam.y % gap;
-  ctx.fillStyle = "rgba(26,25,23,0.13)";
+  ctx.fillStyle = dark ? "rgba(245,243,236,0.14)" : "rgba(26,25,23,0.13)";
   for (let x = ox; x < w; x += gap) {
     for (let y = oy; y < h; y += gap) {
       ctx.beginPath();

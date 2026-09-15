@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-paper: #f5f3ec;
   --color-paper-deep: #ebe7db;
@@ -16,6 +18,29 @@
   --paper: #f5f3ec;
   --ink: #1a1917;
   --clay: #c96442;
+}
+
+.dark {
+  --paper: #171512;
+  --ink: #f5f3ec;
+  --clay: #d97b54;
+}
+
+.dark .float-bar {
+  background: rgba(30, 28, 25, 0.88);
+  border-color: rgba(245, 243, 236, 0.12);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+.dark .tool-btn {
+  color: #f5f3ec;
+}
+.dark .tool-btn:hover {
+  background: rgba(245, 243, 236, 0.08);
+}
+.dark .tool-btn.active {
+  background: #f5f3ec;
+  color: #1a1917;
 }
 
 html,

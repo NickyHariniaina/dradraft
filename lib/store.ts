@@ -12,6 +12,7 @@ interface BoardState {
   style: StyleDefaults;
   sceneName: string;
   editingId: string | null;
+  theme: "light" | "dark";
   past: DrawElement[][];
   future: DrawElement[][];
 
@@ -19,6 +20,7 @@ interface BoardState {
   setCamera: (c: Partial<Camera>) => void;
   setSceneName: (n: string) => void;
   setEditing: (id: string | null) => void;
+  toggleTheme: () => void;
   setStyle: (s: Partial<StyleDefaults>) => void;
 
   commit: () => void;
@@ -55,6 +57,15 @@ function clone(elements: DrawElement[]): DrawElement[] {
   return JSON.parse(JSON.stringify(elements));
 }
 
+const THEME_KEY = "dradraft:theme";
+
+function initialTheme(): "light" | "dark" {
+  if (typeof window === "undefined") return "light";
+  const theme = localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+  document.documentElement.classList.toggle("dark", theme === "dark");
+  return theme;
+}
+
 export const useBoard = create<BoardState>((set, get) => ({
   elements: [],
   selection: [],
@@ -63,6 +74,7 @@ export const useBoard = create<BoardState>((set, get) => ({
   style: defaultStyle,
   sceneName: "Untitled draft",
   editingId: null,
+  theme: initialTheme(),
   past: [],
   future: [],
 
@@ -73,6 +85,16 @@ export const useBoard = create<BoardState>((set, get) => ({
     get().persist();
   },
   setEditing: (editingId) => set({ editingId }),
+  toggleTheme: () => {
+    const theme = get().theme === "dark" ? "light" : "dark";
+    document.documentElement.classList.toggle("dark", theme === "dark");
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* ignore */
+    }
+    set({ theme });
+  },
   setStyle: (patch) => {
     const style = { ...get().style, ...patch };
     set({ style });

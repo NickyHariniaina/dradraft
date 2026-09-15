@@ -1,6 +1,6 @@
 import Board from "@/components/Board";
 import Toolbar from "@/components/Toolbar";
-import TopBar, { SceneName } from "@/components/TopBar";
+import TopBar, { SceneName, ThemeToggle } from "@/components/TopBar";
 import StylePanel from "@/components/StylePanel";
 import ZoomBar from "@/components/ZoomBar";
 
@@ -19,7 +19,9 @@ export default function Home() {
         <div className="pointer-events-auto absolute left-1/2 top-0 -translate-x-1/2">
           <SceneName />
         </div>
-        <div />
+        <div className="pointer-events-auto">
+          <ThemeToggle />
+        </div>
       </div>
 
       {/* left rail toolbar */}
@@ -35,7 +37,7 @@ export default function Home() {
       {/* bottom bar */}
       <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2">
         <ZoomBar />
-        <div className="float-bar hidden rounded-2xl px-3 py-2 text-[12px] text-black/60 md:block">
+        <div className="float-bar hidden rounded-2xl px-3 py-2 text-[12px] text-black/60 dark:text-white/60 md:block">
           drag to draw · space to pan · scroll to move · ctrl+scroll to zoom
         </div>
       </div>

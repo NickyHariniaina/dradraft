@@ -70,6 +70,7 @@ export default function Board() {
   const camera = useBoard((s) => s.camera);
   const tool = useBoard((s) => s.tool);
   const editingId = useBoard((s) => s.editingId);
+  const theme = useBoard((s) => s.theme);
   const toolRef = useRef(tool);
   toolRef.current = tool;
 
@@ -105,7 +106,7 @@ export default function Board() {
     const h = canvas.height / dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const st = useBoard.getState();
-    drawGrid(ctx, st.camera, w, h);
+    drawGrid(ctx, st.camera, w, h, theme === "dark");
     ctx.save();
     applyCamera(ctx, st.camera);
     // scale line widths by dpr compensation: applyCamera overwrote transform, re-apply dpr
@@ -119,7 +120,7 @@ export default function Board() {
     if (sel.length) drawSelection(ctx, sel, st.camera.zoom);
     if (marquee) drawMarquee(ctx, marquee.x, marquee.y, marquee.w, marquee.h);
     ctx.restore();
-  }, [elements, selection, camera, draft, marquee, editingId]);
+  }, [elements, selection, camera, draft, marquee, editingId, theme]);
 
   // ---- keyboard ----
   useEffect(() => {
