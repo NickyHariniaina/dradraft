@@ -52,16 +52,16 @@ export default function StylePanel() {
         ))}
       </div>
       <p className="mb-1 font-medium">Width</p>
-      <div className="mb-3 flex gap-1">
-        {[1, 2, 4].map((w) => (
-          <button
-            key={w}
-            onClick={() => setStyle({ strokeWidth: w })}
-            className={`flex-1 rounded-lg border px-2 py-1 ${style.strokeWidth === w ? "border-[#1a1917] bg-[#1a1917] text-white" : "border-black/15"}`}
-          >
-            {w}px
-          </button>
-        ))}
+      <div className="mb-3 flex items-center gap-2">
+        <input
+          type="number"
+          min={1}
+          max={24}
+          value={style.strokeWidth}
+          onChange={(e) => setStyle({ strokeWidth: Math.min(24, Math.max(1, Number(e.target.value) || 1)) })}
+          className="w-16 rounded-lg border border-black/15 bg-transparent px-2 py-1 outline-none"
+        />
+        <span className="text-black/50">px</span>
       </div>
       <p className="mb-1 font-medium">Opacity — {Math.round(style.opacity * 100)}%</p>
       <input
