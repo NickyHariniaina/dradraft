@@ -82,11 +82,45 @@ export default function Board() {
     useBoard.getState().load();
   }, []);
 
+  // latest render inputs, mirrored for the resize observer callback
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+  const marqueeRef = useRef(marquee);
+  marqueeRef.current = marquee;
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
+
+  function draw() {
+    const canvas = canvasRef.current!;
+    const ctx = canvas.getContext("2d")!;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = canvas.width / dpr;
+    const h = canvas.height / dpr;
+    const dark = themeRef.current === "dark";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const st = useBoard.getState();
+    drawGrid(ctx, st.camera, w, h, dark);
+    ctx.save();
+    applyCamera(ctx, st.camera);
+    // scale line widths by dpr compensation: applyCamera overwrote transform, re-apply dpr
+    ctx.setTransform(st.camera.zoom * dpr, 0, 0, st.camera.zoom * dpr, st.camera.x * dpr, st.camera.y * dpr);
+    for (const el of st.elements) {
+      if (el.id === st.editingId && el.type === "text") continue; // hide while editing
+      drawElement(ctx, el, dark);
+    }
+    const d = draftRef.current;
+    if (d) drawElement(ctx, d, dark);
+    const sel = st.elements.filter((e) => st.selection.includes(e.id));
+    if (sel.length) drawSelection(ctx, sel, st.camera.zoom);
+    const m = marqueeRef.current;
+    if (m) drawMarquee(ctx, m.x, m.y, m.w, m.h);
+    ctx.restore();
+  }
+
   // ---- render loop ----
   useEffect(() => {
     const canvas = canvasRef.current!;
     const wrap = wrapRef.current!;
-    const ctx = canvas.getContext("2d")!;
     function resize() {
       const r = wrap.getBoundingClientRect();
       const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -95,34 +129,22 @@ export default function Board() {
       canvas.style.width = `${r.width}px`;
       canvas.style.height = `${r.height}px`;
     }
-    resize();
-    const ro = new ResizeObserver(resize);
+    function resizeAndDraw() {
+      resize();
+      draw();
+    }
+    resizeAndDraw();
+    // NB: ResizeObserver fires once on observe(), after the first paint.
+    // Setting canvas.width wipes the canvas, so redraw every time.
+    const ro = new ResizeObserver(resizeAndDraw);
     ro.observe(wrap);
     return () => ro.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    const canvas = canvasRef.current!;
-    const ctx = canvas.getContext("2d")!;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const w = canvas.width / dpr;
-    const h = canvas.height / dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const st = useBoard.getState();
-    drawGrid(ctx, st.camera, w, h, theme === "dark");
-    ctx.save();
-    applyCamera(ctx, st.camera);
-    // scale line widths by dpr compensation: applyCamera overwrote transform, re-apply dpr
-    ctx.setTransform(st.camera.zoom * dpr, 0, 0, st.camera.zoom * dpr, st.camera.x * dpr, st.camera.y * dpr);
-    for (const el of st.elements) {
-      if (el.id === st.editingId && el.type === "text") continue; // hide while editing
-      drawElement(ctx, el, theme === "dark");
-    }
-    if (draft) drawElement(ctx, draft, theme === "dark");
-    const sel = st.elements.filter((e) => st.selection.includes(e.id));
-    if (sel.length) drawSelection(ctx, sel, st.camera.zoom);
-    if (marquee) drawMarquee(ctx, marquee.x, marquee.y, marquee.w, marquee.h);
-    ctx.restore();
+    draw();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [elements, selection, camera, draft, marquee, editingId, theme]);
 
   // ---- keyboard ----
