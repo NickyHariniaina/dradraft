@@ -1,6 +1,6 @@
 import Board from "@/components/Board";
 import Toolbar from "@/components/Toolbar";
-import TopBar from "@/components/TopBar";
+import TopBar, { SceneName } from "@/components/TopBar";
 import StylePanel from "@/components/StylePanel";
 import ZoomBar from "@/components/ZoomBar";
 
@@ -11,15 +11,19 @@ export default function Home() {
         <Board />
       </div>
 
-      {/* top bar */}
+      {/* top bar: actions left, scene name center */}
       <div className="pointer-events-none absolute left-4 right-4 top-4 flex items-start justify-between">
         <div className="pointer-events-auto">
           <TopBar />
         </div>
+        <div className="pointer-events-auto absolute left-1/2 top-0 -translate-x-1/2">
+          <SceneName />
+        </div>
+        <div />
       </div>
 
-      {/* floating toolbar */}
-      <div className="absolute left-1/2 top-4 -translate-x-1/2">
+      {/* left rail toolbar */}
+      <div className="absolute left-4 top-1/2 -translate-y-1/2">
         <Toolbar />
       </div>
 
@@ -34,11 +38,6 @@ export default function Home() {
         <div className="float-bar hidden rounded-2xl px-3 py-2 text-[12px] text-black/60 md:block">
           drag to draw · space to pan · scroll to move · ctrl+scroll to zoom
         </div>
-      </div>
-
-      {/* brand corner */}
-      <div className="absolute bottom-4 left-4 hidden font-serif text-[13px] italic text-black/50 lg:block">
-        dradraft — think in sketches
       </div>
     </main>
   );
