@@ -8,14 +8,12 @@ export default function StylePanel() {
   const style = useBoard((s) => s.style);
   const setStyle = useBoard((s) => s.setStyle);
 
-  if (selection.length === 0) return null;
-
   const fills: FillStyle[] = ["transparent", "solid", "hatch"];
 
   return (
     <div className="float-bar w-56 rounded-2xl p-4 text-[13px]">
       <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-black/50">
-        {selection.length} selected
+        {selection.length > 0 ? `${selection.length} selected` : "Style"}
       </p>
       <p className="mb-1 font-medium">Stroke</p>
       <div className="mb-3 flex items-center gap-1.5">
