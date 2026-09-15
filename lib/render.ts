@@ -3,6 +3,23 @@ import { boundsOf, handlePositions, type HandleId } from "./geometry";
 
 export const CLAY = "#c96442";
 const PAPER = "#f5f3ec";
+const INK_LIGHT = "#f5f3ec";
+
+function luminance(hex: string): number {
+  const m = hex.replace("#", "");
+  const c = m.length === 3 ? m.split("").map((x) => x + x).join("") : m;
+  const r = parseInt(c.slice(0, 2), 16) / 255;
+  const g = parseInt(c.slice(2, 4), 16) / 255;
+  const b = parseInt(c.slice(4, 6), 16) / 255;
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+// Display-only: dark strokes become unreadable on the dark paper,
+// so text falls back to a light fill without mutating stored colors.
+function textFill(stroke: string, dark: boolean): string {
+  if (dark && luminance(stroke) < 0.35) return INK_LIGHT;
+  return stroke;
+}
 
 export function applyCamera(ctx: CanvasRenderingContext2D, cam: Camera) {
   ctx.setTransform(cam.zoom, 0, 0, cam.zoom, cam.x, cam.y);
@@ -62,13 +79,13 @@ function fillAndStroke(ctx: CanvasRenderingContext2D, el: DrawElement, path: () 
   ctx.restore();
 }
 
-export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement) {
+export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement, dark = false) {
   if (el.type === "rect") {
     fillAndStroke(ctx, el, () => {
       ctx.beginPath();
       ctx.rect(el.x, el.y, Math.max(1, el.w), Math.max(1, el.h));
     });
-    if (el.text) drawLabel(ctx, el);
+    if (el.text) drawLabel(ctx, el, dark);
   } else if (el.type === "ellipse") {
     fillAndStroke(ctx, el, () => {
       ctx.beginPath();
@@ -82,7 +99,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement) {
         Math.PI * 2
       );
     });
-    if (el.text) drawLabel(ctx, el);
+    if (el.text) drawLabel(ctx, el, dark);
   } else if (el.type === "diamond") {
     const cx = el.x + el.w / 2;
     const cy = el.y + el.h / 2;
@@ -94,7 +111,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement) {
       ctx.lineTo(el.x, cy);
       ctx.closePath();
     });
-    if (el.text) drawLabel(ctx, el);
+    if (el.text) drawLabel(ctx, el, dark);
   } else if (el.type === "line" || el.type === "arrow") {
     const pts = (el.points ?? []).map((p) => ({ x: el.x + p.x, y: el.y + p.y }));
     if (pts.length < 2) return;
@@ -149,7 +166,7 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement) {
   } else if (el.type === "text") {
     ctx.save();
     ctx.globalAlpha = el.opacity;
-    ctx.fillStyle = el.stroke;
+    ctx.fillStyle = textFill(el.stroke, dark);
     ctx.font = `${el.fontSize ?? 20}px Inter, sans-serif`;
     ctx.textBaseline = "top";
     const lines = (el.text ?? "").split("\n");
@@ -158,10 +175,10 @@ export function drawElement(ctx: CanvasRenderingContext2D, el: DrawElement) {
   }
 }
 
-function drawLabel(ctx: CanvasRenderingContext2D, el: DrawElement) {
+function drawLabel(ctx: CanvasRenderingContext2D, el: DrawElement, dark = false) {
   ctx.save();
   ctx.globalAlpha = el.opacity;
-  ctx.fillStyle = el.stroke;
+  ctx.fillStyle = textFill(el.stroke, dark);
   ctx.font = `${el.fontSize ?? 20}px Inter, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";

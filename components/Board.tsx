@@ -113,9 +113,9 @@ export default function Board() {
     ctx.setTransform(st.camera.zoom * dpr, 0, 0, st.camera.zoom * dpr, st.camera.x * dpr, st.camera.y * dpr);
     for (const el of st.elements) {
       if (el.id === st.editingId && el.type === "text") continue; // hide while editing
-      drawElement(ctx, el);
+      drawElement(ctx, el, theme === "dark");
     }
-    if (draft) drawElement(ctx, draft);
+    if (draft) drawElement(ctx, draft, theme === "dark");
     const sel = st.elements.filter((e) => st.selection.includes(e.id));
     if (sel.length) drawSelection(ctx, sel, st.camera.zoom);
     if (marquee) drawMarquee(ctx, marquee.x, marquee.y, marquee.w, marquee.h);
