@@ -16,7 +16,7 @@ export default function StylePanel() {
         {selection.length > 0 ? `${selection.length} selected` : "Style"}
       </p>
       <p className="mb-1 font-medium">Stroke</p>
-      <div className="mb-3 flex items-center gap-1.5">
+      <div className="mb-3 flex flex-wrap items-center gap-1.5">
         {INK_SWATCHES.map((c) => (
           <button
             key={c}
