@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useBoard } from "@/lib/store";
 import { sceneFromJSON } from "@/lib/export";
 import { Moon, Sun } from "lucide-react";
@@ -8,13 +8,21 @@ import { Moon, Sun } from "lucide-react";
 export function ThemeToggle() {
   const theme = useBoard((s) => s.theme);
   const toggleTheme = useBoard((s) => s.toggleTheme);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   return (
     <button
       onClick={toggleTheme}
       title={theme === "dark" ? "Light mode" : "Dark mode"}
       className="float-bar tool-btn flex h-10 w-10 items-center justify-center rounded-2xl"
     >
-      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      {!mounted ? (
+        <span className="h-4 w-4" />
+      ) : theme === "dark" ? (
+        <Sun className="h-4 w-4" />
+      ) : (
+        <Moon className="h-4 w-4" />
+      )}
     </button>
   );
 }

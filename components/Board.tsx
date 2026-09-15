@@ -80,6 +80,7 @@ export default function Board() {
   // load persisted
   useEffect(() => {
     useBoard.getState().load();
+    useBoard.getState().hydrateTheme();
   }, []);
 
   // latest render inputs, mirrored for the resize observer callback

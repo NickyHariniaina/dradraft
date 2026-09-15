@@ -21,6 +21,7 @@ interface BoardState {
   setSceneName: (n: string) => void;
   setEditing: (id: string | null) => void;
   toggleTheme: () => void;
+  hydrateTheme: () => void;
   setStyle: (s: Partial<StyleDefaults>) => void;
 
   commit: () => void;
@@ -59,11 +60,8 @@ function clone(elements: DrawElement[]): DrawElement[] {
 
 const THEME_KEY = "dradraft:theme";
 
-function initialTheme(): "light" | "dark" {
-  if (typeof window === "undefined") return "light";
-  const theme = localStorage.getItem(THEME_KEY) === "dark" ? "dark" : "light";
+function applyThemeClass(theme: "light" | "dark") {
   document.documentElement.classList.toggle("dark", theme === "dark");
-  return theme;
 }
 
 export const useBoard = create<BoardState>((set, get) => ({
@@ -74,7 +72,7 @@ export const useBoard = create<BoardState>((set, get) => ({
   style: defaultStyle,
   sceneName: "Untitled draft",
   editingId: null,
-  theme: initialTheme(),
+  theme: "light",
   past: [],
   future: [],
 
@@ -87,13 +85,24 @@ export const useBoard = create<BoardState>((set, get) => ({
   setEditing: (editingId) => set({ editingId }),
   toggleTheme: () => {
     const theme = get().theme === "dark" ? "light" : "dark";
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    applyThemeClass(theme);
     try {
       localStorage.setItem(THEME_KEY, theme);
     } catch {
       /* ignore */
     }
     set({ theme });
+  },
+  hydrateTheme: () => {
+    // Client-only: called once on mount so server and client render identically.
+    try {
+      if (localStorage.getItem(THEME_KEY) === "dark") {
+        applyThemeClass("dark");
+        set({ theme: "dark" });
+      }
+    } catch {
+      /* ignore */
+    }
   },
   setStyle: (patch) => {
     const style = { ...get().style, ...patch };
