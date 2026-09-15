@@ -74,16 +74,16 @@ export default function StylePanel() {
         className="mb-3 w-full accent-[#c96442]"
       />
       <p className="mb-1 font-medium">Text size</p>
-      <div className="mb-4 flex gap-1">
-        {[14, 20, 32].map((f) => (
-          <button
-            key={f}
-            onClick={() => setStyle({ fontSize: f })}
-            className={`flex-1 rounded-lg border px-2 py-1 ${style.fontSize === f ? "border-[#1a1917] bg-[#1a1917] text-white" : "border-black/15"}`}
-          >
-            {f}
-          </button>
-        ))}
+      <div className="mb-4 flex items-center gap-2">
+        <input
+          type="number"
+          min={8}
+          max={120}
+          value={style.fontSize}
+          onChange={(e) => setStyle({ fontSize: Math.min(120, Math.max(8, Number(e.target.value) || 8)) })}
+          className="w-16 rounded-lg border border-black/15 bg-transparent px-2 py-1 outline-none"
+        />
+        <span className="text-black/50">px</span>
       </div>
       <div className="grid grid-cols-2 gap-1.5">
         <button onClick={dup} className="rounded-lg border border-black/15 px-2 py-1.5 font-medium hover:bg-black/5">Duplicate</button>
