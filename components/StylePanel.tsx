@@ -7,10 +7,6 @@ export default function StylePanel() {
   const selection = useBoard((s) => s.selection);
   const style = useBoard((s) => s.style);
   const setStyle = useBoard((s) => s.setStyle);
-  const del = useBoard((s) => s.deleteSelected);
-  const dup = useBoard((s) => s.duplicateSelected);
-  const fwd = useBoard((s) => s.bringForward);
-  const bwd = useBoard((s) => s.sendBackward);
 
   if (selection.length === 0) return null;
 
@@ -74,7 +70,7 @@ export default function StylePanel() {
         className="mb-3 w-full accent-[#c96442]"
       />
       <p className="mb-1 font-medium">Text size</p>
-      <div className="mb-4 flex items-center gap-2">
+      <div className="flex items-center gap-2">
         <input
           type="number"
           min={8}
@@ -84,12 +80,6 @@ export default function StylePanel() {
           className="w-16 rounded-lg border border-black/15 bg-transparent px-2 py-1 outline-none"
         />
         <span className="text-black/50">px</span>
-      </div>
-      <div className="grid grid-cols-2 gap-1.5">
-        <button onClick={dup} className="rounded-lg border border-black/15 px-2 py-1.5 font-medium hover:bg-black/5">Duplicate</button>
-        <button onClick={del} className="rounded-lg border border-[#c96442]/40 px-2 py-1.5 font-medium text-[#c96442] hover:bg-[#c96442]/10">Delete</button>
-        <button onClick={fwd} className="rounded-lg border border-black/15 px-2 py-1.5 hover:bg-black/5">Forward</button>
-        <button onClick={bwd} className="rounded-lg border border-black/15 px-2 py-1.5 hover:bg-black/5">Backward</button>
       </div>
     </div>
   );
