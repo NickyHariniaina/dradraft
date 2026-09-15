@@ -46,7 +46,7 @@ export default function Toolbar() {
   const tool = useBoard((s) => s.tool);
   const setTool = useBoard((s) => s.setTool);
   return (
-    <div className="float-bar flex items-center gap-0.5 rounded-2xl px-2 py-1.5">
+    <div className="float-bar flex flex-col items-center gap-0.5 rounded-2xl px-1.5 py-2">
       {TOOLS.map((t) => {
         const Icon = TOOL_ICONS[t.id];
         return (
