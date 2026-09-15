@@ -32,6 +32,8 @@ interface Interaction {
   startWY: number;
   origCamX: number;
   origCamY: number;
+  lastSX: number;
+  lastSY: number;
   handle: HandleId | null;
   origEl: DrawElement | null;
   origBounds: { x: number; y: number; w: number; h: number } | null;
@@ -57,6 +59,7 @@ export default function Board() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const inter = useRef<Interaction>({
     mode: "idle", startWX: 0, startWY: 0, origCamX: 0, origCamY: 0,
+    lastSX: 0, lastSY: 0,
     handle: null, origEl: null, origBounds: null,
     origPositions: new Map(), moved: false,
   });
@@ -212,6 +215,8 @@ export default function Board() {
     it.startWY = wpt.y;
     it.origCamX = st.camera.x;
     it.origCamY = st.camera.y;
+    it.lastSX = pos.x;
+    it.lastSY = pos.y;
     it.moved = false;
 
     // pan: hand tool, middle button, or space
@@ -305,7 +310,10 @@ export default function Board() {
     if (Math.abs(dx) + Math.abs(dy) > 0.5) it.moved = true;
 
     if (it.mode === "panning") {
-      st.setCamera({ x: it.origCamX + (pos.x - (canvasPosRef.current?.x ?? pos.x)) * 0 + (e.movementX), y: it.origCamY + e.movementY });
+      const cam = st.camera;
+      st.setCamera({ x: cam.x + (pos.x - it.lastSX), y: cam.y + (pos.y - it.lastSY) });
+      it.lastSX = pos.x;
+      it.lastSY = pos.y;
       return;
     }
     if (it.mode === "marquee") {
@@ -349,8 +357,6 @@ export default function Board() {
       }
     }
   }
-
-  const canvasPosRef = useRef<{ x: number; y: number } | null>(null);
 
   function onMouseUp(e: React.MouseEvent) {
     const st = useBoard.getState();
@@ -411,20 +417,27 @@ export default function Board() {
     it.origBounds = null;
   }
 
-  function onWheel(e: React.WheelEvent) {
-    const st = useBoard.getState();
-    if (e.ctrlKey || e.metaKey) {
+  // Native non-passive wheel listener: plain wheel zooms around the cursor,
+  // shift+wheel pans. React's onWheel is passive, so preventDefault is a no-op there.
+  useEffect(() => {
+    const canvas = canvasRef.current!;
+    function onWheel(e: WheelEvent) {
       e.preventDefault();
-      const pos = canvasPos(e);
-      const before = screenToWorld(pos.x, pos.y, st.camera);
+      const st = useBoard.getState();
+      const r = canvas.getBoundingClientRect();
+      const sx = e.clientX - r.left;
+      const sy = e.clientY - r.top;
+      if (e.shiftKey) {
+        st.setCamera({ x: st.camera.x - e.deltaX, y: st.camera.y - e.deltaY });
+        return;
+      }
+      const before = screenToWorld(sx, sy, st.camera);
       const zoom = Math.min(4, Math.max(0.15, st.camera.zoom * Math.exp(-e.deltaY * 0.002)));
-      const afterX = before.x * zoom + st.camera.x;
-      const afterY = before.y * zoom + st.camera.y;
-      st.setCamera({ zoom, x: st.camera.x + (pos.x - afterX), y: st.camera.y + (pos.y - afterY) });
-    } else {
-      st.setCamera({ x: st.camera.x - e.deltaX, y: st.camera.y - e.deltaY });
+      st.setCamera({ zoom, x: sx - before.x * zoom, y: sy - before.y * zoom });
     }
-  }
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    return () => canvas.removeEventListener("wheel", onWheel);
+  }, []);
 
   function onDoubleClick(e: React.MouseEvent) {
     const st = useBoard.getState();
@@ -469,13 +482,9 @@ export default function Board() {
       <canvas
         ref={canvasRef}
         onMouseDown={onMouseDown}
-        onMouseMove={(e) => {
-          canvasPosRef.current = canvasPos(e);
-          onMouseMove(e);
-        }}
+        onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseUp}
-        onWheel={onWheel}
         onDoubleClick={onDoubleClick}
         style={{ cursor: tool === "hand" ? "grab" : tool === "select" ? "default" : "crosshair" }}
       />
