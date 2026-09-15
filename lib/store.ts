@@ -27,7 +27,7 @@ interface BoardState {
   undo: () => void;
   redo: () => void;
 
-  addElement: (el: DrawElement) => void;
+  addElement: (el: DrawElement, select?: boolean) => void;
   updateElement: (id: string, patch: Partial<DrawElement>) => void;
   removeElement: (id: string) => void;
   select: (ids: string[], additive?: boolean) => void;
@@ -151,9 +151,9 @@ export const useBoard = create<BoardState>((set, get) => ({
     get().persist();
   },
 
-  addElement: (el) => {
+  addElement: (el, select = true) => {
     get().commit();
-    set((s) => ({ elements: [...s.elements, el], selection: [el.id] }));
+    set((s) => ({ elements: [...s.elements, el], selection: select ? [el.id] : [] }));
     get().persist();
   },
   updateElement: (id, patch) =>

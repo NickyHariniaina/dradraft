@@ -390,7 +390,7 @@ export default function Board() {
           el.x = it.startWX;
           el.y = it.startWY;
         }
-        st.addElement(el);
+        st.addElement(el, false);
         if (el.type === "text") st.setEditing(el.id);
       }
       setDraft(null);
@@ -398,9 +398,9 @@ export default function Board() {
     if (it.mode === "pencil" && draft) {
       const pts = simplifyPoints(draft.points ?? [], 2 / st.camera.zoom);
       if (pts.length > 1) {
-        st.addElement({ ...draft, id: uid(), points: pts });
+        st.addElement({ ...draft, id: uid(), points: pts }, false);
       } else if (pts.length === 1) {
-        st.addElement({ ...draft, id: uid(), points: pts });
+        st.addElement({ ...draft, id: uid(), points: pts }, false);
       }
       setDraft(null);
     }
