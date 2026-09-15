@@ -1,6 +1,7 @@
 "use client";
 
 import { useBoard } from "@/lib/store";
+import { screenToWorld } from "@/lib/geometry";
 
 export default function ZoomBar() {
   const camera = useBoard((s) => s.camera);
@@ -8,8 +9,11 @@ export default function ZoomBar() {
   const pct = Math.round(camera.zoom * 100);
 
   function zoomBy(f: number) {
-    const zoom = Math.min(4, Math.max(0.1, camera.zoom * f));
-    setCamera({ zoom });
+    const zoom = Math.min(4, Math.max(0.15, camera.zoom * f));
+    const cx = window.innerWidth / 2;
+    const cy = window.innerHeight / 2;
+    const before = screenToWorld(cx, cy, camera);
+    setCamera({ zoom, x: cx - before.x * zoom, y: cy - before.y * zoom });
   }
 
   return (
