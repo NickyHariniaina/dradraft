@@ -22,7 +22,7 @@ export default function StylePanel() {
         {selection.length} selected
       </p>
       <p className="mb-1 font-medium">Stroke</p>
-      <div className="mb-3 flex gap-1.5">
+      <div className="mb-3 flex items-center gap-1.5">
         {INK_SWATCHES.map((c) => (
           <button
             key={c}
@@ -31,6 +31,13 @@ export default function StylePanel() {
             style={{ background: c }}
           />
         ))}
+        <input
+          type="color"
+          value={style.stroke}
+          onChange={(e) => setStyle({ stroke: e.target.value })}
+          title="Custom color"
+          className="h-6 w-8 cursor-pointer rounded border border-black/15 bg-transparent p-0.5"
+        />
       </div>
       <p className="mb-1 font-medium">Fill</p>
       <div className="mb-3 flex gap-1">
