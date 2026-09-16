@@ -3,27 +3,66 @@
 import { useEffect, useRef, useState } from "react";
 import { useBoard } from "@/lib/store";
 import { sceneFromJSON } from "@/lib/export";
-import { GitBranch, Loader2, LogOut, Moon, Sun } from "lucide-react";
+import { FolderOpen, GitBranch, Loader2, LogOut, Moon, Sun } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 export function GithubConnect() {
   const { data: session, status } = useSession();
   const [repoName, setRepoName] = useState("dradraft-scenes");
-  const [showModal, setShowModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showBrowseModal, setShowBrowseModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [drafts, setDrafts] = useState<{ name: string; path: string; download_url: string | null; type: string }[]>([]);
+  const [loadingDrafts, setLoadingDrafts] = useState(false);
+
+  const storedRepo = typeof window !== "undefined" ? localStorage.getItem("dradraft:githubRepo") : null;
+  const activeRepo = storedRepo || repoName;
 
   useEffect(() => {
     if (status !== "authenticated") return;
     const key = "dradraft:githubRepo";
     if (localStorage.getItem(key)) return;
     setChecking(true);
-    fetch("/api/github/repo")
+    fetch(`/api/github/repo?name=${encodeURIComponent(repoName)}`)
       .then((r) => {
-        if (r.status === 404) setShowModal(true);
+        if (r.status === 404) setShowCreateModal(true);
+        else if (r.ok) r.json().then((data) => localStorage.setItem(key, data.name ?? repoName));
       })
       .finally(() => setChecking(false));
-  }, [status]);
+  }, [status, repoName]);
+
+  async function openBrowse() {
+    const repo = localStorage.getItem("dradraft:githubRepo") || repoName;
+    setShowBrowseModal(true);
+    setLoadingDrafts(true);
+    try {
+      const res = await fetch(`/api/github/contents?repo=${encodeURIComponent(repo)}`);
+      if (res.ok) {
+        const data = await res.json();
+        const files = Array.isArray(data) ? data.filter((f: any) => f.type === "file") : [];
+        setDrafts(files);
+      } else {
+        setDrafts([]);
+      }
+    } finally {
+      setLoadingDrafts(false);
+    }
+  }
+
+  async function loadDraft(file: { download_url: string | null; path: string }) {
+    if (!file.download_url) return;
+    const res = await fetch(file.download_url);
+    const text = await res.text();
+    try {
+      const { elements, name } = sceneFromJSON(text);
+      useBoard.getState().replaceAll(elements);
+      useBoard.getState().setSceneName(name);
+      setShowBrowseModal(false);
+    } catch {
+      alert("Invalid draft file");
+    }
+  }
 
   if (status === "loading") {
     return <span className="float-bar h-9 w-28 animate-pulse rounded-2xl" />;
@@ -44,15 +83,14 @@ export function GithubConnect() {
     <>
       <div className="float-bar flex items-center gap-2 rounded-2xl px-3 py-1.5">
         {session.user?.image && <img src={session.user.image} alt="" className="h-7 w-7 rounded-full" />}
-        <span className="text-sm font-medium">{session.user?.name ?? session.user?.email}</span>
+        <button onClick={openBrowse} className="flex items-center gap-1.5 rounded-lg bg-[#24292e] px-3 py-1.5 text-sm font-medium text-white">
+          <FolderOpen className="h-4 w-4" /> Browse my drafts
+        </button>
         <button onClick={() => signOut()} className="tool-btn rounded-lg p-1" title="Sign out">
           <LogOut className="h-4 w-4" />
         </button>
-        <button onClick={() => setShowModal(true)} className="rounded-lg bg-[#24292e] px-3 py-1.5 text-sm font-medium text-white">
-          {checking ? "Checking..." : "Storage repo"}
-        </button>
       </div>
-      {showModal && (
+      {showCreateModal && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
           <div className="float-bar w-full max-w-md rounded-2xl p-5">
             <h3 className="text-[15px] font-semibold">Create private repository</h3>
@@ -64,7 +102,7 @@ export function GithubConnect() {
               className="mt-3 w-full rounded-lg border border-black/15 bg-transparent px-3 py-2 text-sm outline-none"
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button onClick={() => setShowModal(false)} className="rounded-lg px-3 py-1.5 text-sm">
+              <button onClick={() => setShowCreateModal(false)} className="rounded-lg px-3 py-1.5 text-sm">
                 Skip
               </button>
               <button
@@ -78,7 +116,7 @@ export function GithubConnect() {
                   });
                   if (res.ok) {
                     localStorage.setItem("dradraft:githubRepo", repoName.trim());
-                    setShowModal(false);
+                    setShowCreateModal(false);
                   } else {
                     const t = await res.text();
                     alert(t || "Failed to create repo");
@@ -89,6 +127,67 @@ export function GithubConnect() {
               >
                 {creating && <Loader2 className="h-4 w-4 animate-spin" />} Create private repo
               </button>
+            </div>
+            {checking && <p className="mt-2 text-xs text-black/50">Checking...</p>}
+          </div>
+        </div>
+      )}
+      {showBrowseModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
+          <div className="float-bar flex max-h-[70vh] w-full max-w-lg flex-col rounded-2xl p-5">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[15px] font-semibold">My drafts — {activeRepo}</h3>
+              <button onClick={() => setShowBrowseModal(false)} className="tool-btn rounded-lg px-2 py-1 text-sm">
+                Close
+              </button>
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                onClick={() => setShowBrowseModal(false)}
+                className="rounded-lg border border-black/15 px-3 py-1.5 text-sm"
+              >
+                Change repo
+              </button>
+              <button onClick={() => setShowCreateModal(true)} className="rounded-lg bg-[#24292e] px-3 py-1.5 text-sm text-white">
+                New repo
+              </button>
+              <button
+                onClick={openBrowse}
+                disabled={loadingDrafts}
+                className="tool-btn rounded-lg px-3 py-1.5 text-sm disabled:opacity-50"
+              >
+                {loadingDrafts ? "Loading..." : "Refresh"}
+              </button>
+            </div>
+            <div className="mt-4 flex-1 overflow-auto rounded-xl border border-black/10">
+              {loadingDrafts ? (
+                <div className="flex items-center justify-center gap-2 p-8 text-sm text-black/60">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading drafts...
+                </div>
+              ) : drafts.length === 0 ? (
+                <div className="p-6 text-center text-sm text-black/60">
+                  No drafts yet in this repo. Save a draft to see it here.
+                  <div className="mt-3">
+                    <button onClick={() => { setShowBrowseModal(false); setShowCreateModal(true); }} className="rounded-lg bg-[#24292e] px-3 py-1.5 text-sm text-white">
+                      Create repo
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <ul className="divide-y divide-black/10">
+                  {drafts.map((f) => (
+                    <li key={f.path} className="flex items-center justify-between gap-2 p-3">
+                      <span className="truncate text-sm font-medium">{f.name}</span>
+                      <button
+                        onClick={() => loadDraft(f)}
+                        className="shrink-0 rounded-lg bg-[#24292e] px-3 py-1 text-xs font-medium text-white"
+                      >
+                        Load
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         </div>
