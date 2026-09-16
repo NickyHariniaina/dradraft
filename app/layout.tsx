@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Newsreader } from "next/font/google";
 import "./globals.css";
+import SessionProvider from "@/components/SessionProvider";
 
 const inter = Inter({ variable: "--font-sans", subsets: ["latin"] });
 const newsreader = Newsreader({
@@ -21,7 +22,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${newsreader.variable} h-full`}>
-      <body suppressHydrationWarning className="h-full">{children}</body>
+      <body suppressHydrationWarning className="h-full">
+        <SessionProvider>{children}</SessionProvider>
+      </body>
     </html>
   );
 }

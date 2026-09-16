@@ -3,7 +3,99 @@
 import { useEffect, useRef, useState } from "react";
 import { useBoard } from "@/lib/store";
 import { sceneFromJSON } from "@/lib/export";
-import { Moon, Sun } from "lucide-react";
+import { Github, Loader2, LogOut, Moon, Sun } from "lucide-react";
+import { useSession, signIn, signOut } from "next-auth/react";
+
+export function GithubConnect() {
+  const { data: session, status } = useSession();
+  const [repoName, setRepoName] = useState("dradraft-scenes");
+  const [showModal, setShowModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const key = "dradraft:githubRepo";
+    if (localStorage.getItem(key)) return;
+    setChecking(true);
+    fetch("/api/github/repo")
+      .then((r) => {
+        if (r.status === 404) setShowModal(true);
+      })
+      .finally(() => setChecking(false));
+  }, [status]);
+
+  if (status === "loading") {
+    return <span className="float-bar h-9 w-28 animate-pulse rounded-2xl" />;
+  }
+
+  if (!session) {
+    return (
+      <button
+        onClick={() => signIn("github")}
+        className="flex items-center gap-2 rounded-2xl bg-[#24292e] px-4 py-2 text-sm font-medium text-white hover:bg-black"
+      >
+        <Github className="h-4 w-4" /> Sign in with GitHub
+      </button>
+    );
+  }
+
+  return (
+    <>
+      <div className="float-bar flex items-center gap-2 rounded-2xl px-3 py-1.5">
+        {session.user?.image && <img src={session.user.image} alt="" className="h-7 w-7 rounded-full" />}
+        <span className="text-sm font-medium">{session.user?.name ?? session.user?.email}</span>
+        <button onClick={() => signOut()} className="tool-btn rounded-lg p-1" title="Sign out">
+          <LogOut className="h-4 w-4" />
+        </button>
+        <button onClick={() => setShowModal(true)} className="rounded-lg bg-[#24292e] px-3 py-1.5 text-sm font-medium text-white">
+          {checking ? "Checking..." : "Storage repo"}
+        </button>
+      </div>
+      {showModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
+          <div className="float-bar w-full max-w-md rounded-2xl p-5">
+            <h3 className="text-[15px] font-semibold">Create private repository</h3>
+            <p className="mt-1 text-sm text-black/60">Pick a name — one private repo holds all drawings.</p>
+            <input
+              value={repoName}
+              onChange={(e) => setRepoName(e.target.value)}
+              placeholder="dradraft-scenes"
+              className="mt-3 w-full rounded-lg border border-black/15 bg-transparent px-3 py-2 text-sm outline-none"
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setShowModal(false)} className="rounded-lg px-3 py-1.5 text-sm">
+                Skip
+              </button>
+              <button
+                disabled={creating || !repoName.trim()}
+                onClick={async () => {
+                  setCreating(true);
+                  const res = await fetch("/api/github/create-repo", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name: repoName.trim() }),
+                  });
+                  if (res.ok) {
+                    localStorage.setItem("dradraft:githubRepo", repoName.trim());
+                    setShowModal(false);
+                  } else {
+                    const t = await res.text();
+                    alert(t || "Failed to create repo");
+                  }
+                  setCreating(false);
+                }}
+                className="flex items-center gap-2 rounded-lg bg-[#24292e] px-4 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {creating && <Loader2 className="h-4 w-4 animate-spin" />} Create private repo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 
 export function ThemeToggle() {
   const theme = useBoard((s) => s.theme);

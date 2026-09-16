@@ -1,6 +1,6 @@
 import Board from "@/components/Board";
 import Toolbar from "@/components/Toolbar";
-import TopBar, { SceneName, ThemeToggle } from "@/components/TopBar";
+import TopBar, { SceneName, ThemeToggle, GithubConnect } from "@/components/TopBar";
 import StylePanel from "@/components/StylePanel";
 import ZoomBar from "@/components/ZoomBar";
 
@@ -19,8 +19,9 @@ export default function Home() {
         <div className="pointer-events-auto absolute left-1/2 top-0 -translate-x-1/2">
           <SceneName />
         </div>
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto flex items-center gap-2">
           <ThemeToggle />
+          <GithubConnect />
         </div>
       </div>
 
