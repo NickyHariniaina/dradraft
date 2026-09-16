@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useBoard } from "@/lib/store";
 import { sceneFromJSON } from "@/lib/export";
-import { Github, Loader2, LogOut, Moon, Sun } from "lucide-react";
+import { GitBranch, Loader2, LogOut, Moon, Sun } from "lucide-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
 export function GithubConnect() {
@@ -35,7 +35,7 @@ export function GithubConnect() {
         onClick={() => signIn("github")}
         className="flex items-center gap-2 rounded-2xl bg-[#24292e] px-4 py-2 text-sm font-medium text-white hover:bg-black"
       >
-        <Github className="h-4 w-4" /> Sign in with GitHub
+        <GitBranch className="h-4 w-4" /> Sign in with GitHub
       </button>
     );
   }
