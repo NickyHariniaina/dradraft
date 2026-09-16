@@ -21,16 +21,19 @@ export function GithubConnect() {
 
   useEffect(() => {
     if (status !== "authenticated") return;
+    if (showCreateModal || showBrowseModal) return;
     const key = "dradraft:githubRepo";
-    if (localStorage.getItem(key)) return;
+    const stored = localStorage.getItem(key);
+    const nameToCheck = stored || repoName;
     setChecking(true);
-    fetch(`/api/github/repo?name=${encodeURIComponent(repoName)}`)
+    fetch(`/api/github/repo?name=${encodeURIComponent(nameToCheck)}`)
       .then((r) => {
         if (r.status === 404) setShowCreateModal(true);
-        else if (r.ok) r.json().then((data) => localStorage.setItem(key, data.name ?? repoName));
+        else if (r.ok) r.json().then((data) => localStorage.setItem(key, data.name ?? nameToCheck));
       })
+      .catch(() => {})
       .finally(() => setChecking(false));
-  }, [status, repoName]);
+  }, [status]);
 
   async function openBrowse() {
     const repo = localStorage.getItem("dradraft:githubRepo") || repoName;
